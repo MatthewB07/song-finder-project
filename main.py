@@ -1,12 +1,21 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from groq import AsyncGroq
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 import os
 import httpx
 
 load_dotenv(".env.local")
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 transcription_key = os.getenv("GROQ_API_KEY")
 if not transcription_key:
@@ -80,7 +89,10 @@ async def find_song(file: UploadFile = File(...)):
         
         matched_songs = await search_genius(transcription)
 
-        return matched_songs
+        return {
+            "transcription": transcription,
+            "search_result": matched_songs
+        }
     
     except Exception as e:
         raise HTTPException(
